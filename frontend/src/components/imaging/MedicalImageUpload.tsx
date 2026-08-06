@@ -1,37 +1,103 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { usePatient } from '../../context/PatientContext';
+import { useAuth } from '../../context/AuthContext';
 
 export const MedicalImageUpload: React.FC = () => {
   const { activePatient } = usePatient();
+  const { addToast } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [activeScanName, setActiveScanName] = useState<string>('CBCT_Mandible_HighRes.dcm');
+  const [activeScanSize, setActiveScanSize] = useState<string>('145.2 MB');
   const [windowPreset, setWindowPreset] = useState<'Bone' | 'SoftTissue' | 'Brain' | 'Lung'>('Bone');
   const [sliceIndex, setSliceIndex] = useState(160);
   const [contrast, setContrast] = useState(100);
   const [brightness, setBrightness] = useState(100);
   const [noiseRemoval, setNoiseRemoval] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      processSelectedFile(files[0]);
+    }
+  };
+
+  const processSelectedFile = (file: File) => {
+    const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
+    setActiveScanName(file.name);
+    setActiveScanSize(`${sizeInMB} MB`);
+    addToast('success', 'File Uploaded Successfully', `Loaded "${file.name}" (${sizeInMB} MB) into DICOM Pipeline.`);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processSelectedFile(e.dataTransfer.files[0]);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept=".dcm,.zip,.stl,.obj,.ply,.png,.jpg,.jpeg,.json,.pdf,.nii,.nrrd"
+        className="hidden"
+      />
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white">Medical Scan Upload & DICOM Viewer</h2>
           <p className="text-xs text-slate-500">Multi-slice CT, CBCT, MRI, DICOM, STL, OBJ, PLY processing pipeline</p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
           <span className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-medium text-xs border border-blue-200 dark:border-blue-800">
-            Active Scan: CBCT_Mandible_HighRes.dcm
+            Active Scan: <strong>{activeScanName}</strong> ({activeScanSize})
           </span>
         </div>
       </div>
 
       {/* Upload Drag & Drop Box */}
-      <div className="bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center hover:border-blue-500 transition cursor-pointer">
+      <div
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`bg-slate-50 dark:bg-slate-900/50 border-2 border-dashed rounded-2xl p-8 text-center transition cursor-pointer ${
+          isDragging
+            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20'
+            : 'border-slate-300 dark:border-slate-700 hover:border-blue-500'
+        }`}
+      >
         <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center mx-auto text-2xl mb-3">
           📥
         </div>
-        <h3 className="font-bold text-sm text-slate-900 dark:text-white">Drag & Drop CT / CBCT / MRI / DICOM / STL Files Here</h3>
-        <p className="text-xs text-slate-500 mt-1">Supports multi-slice DICOM series (.dcm, .zip) up to 2.5 GB</p>
-        <button className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-blue-500/20">
+        <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+          Drag & Drop CT / CBCT / MRI / DICOM / STL Files Here
+        </h3>
+        <p className="text-xs text-slate-500 mt-1">Supports multi-slice DICOM series (.dcm, .zip, .stl, .obj, .png) up to 2.5 GB</p>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            fileInputRef.current?.click();
+          }}
+          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-blue-500/20"
+        >
           Browse Local Files
         </button>
       </div>
@@ -157,3 +223,4 @@ export const MedicalImageUpload: React.FC = () => {
     </div>
   );
 };
+
