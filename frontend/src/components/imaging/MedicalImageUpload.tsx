@@ -90,16 +90,40 @@ export const MedicalImageUpload: React.FC = () => {
           Drag & Drop CT / CBCT / MRI / DICOM / STL Files Here
         </h3>
         <p className="text-xs text-slate-500 mt-1">Supports multi-slice DICOM series (.dcm, .zip, .stl, .obj, .png) up to 2.5 GB</p>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            fileInputRef.current?.click();
-          }}
-          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-blue-500/20"
-        >
-          Browse Local Files
-        </button>
+        <div className="flex flex-wrap gap-2 mt-4 justify-center">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-blue-500/20"
+          >
+            Browse Local Files
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              processSelectedFile(new File(['SAMPLE_DICOM_DATA'], 'CBCT_Mandible_HighRes_001.dcm', { type: 'application/dicom' }));
+            }}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-emerald-500/20"
+          >
+            📁 Use Sample CBCT Scan (.dcm)
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              processSelectedFile(new File(['SAMPLE_STL_DATA'], 'Mandibular_Reconstruction_3D_Model.stl', { type: 'model/stl' }));
+            }}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition shadow-md shadow-purple-500/20"
+          >
+            🦴 Use Sample 3D Model (.stl)
+          </button>
+        </div>
       </div>
 
       {/* DICOM Slice Viewer & Image Enhancement Controls */}

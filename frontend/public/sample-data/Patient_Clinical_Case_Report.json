@@ -1,0 +1,11 @@
+{
+  "patientId": "PAT-2026-8842",
+  "name": "John Doe",
+  "age": 48,
+  "gender": "Male",
+  "diagnosis": "Ameloblastoma of Right Mandibular Body",
+  "scanType": "CBCT 0.625mm High Resolution",
+  "tumorVolume": "14.2 cm³",
+  "recommendedFlap": "Fibula Free Flap (FFF)",
+  "fixationPlate": "Recon Locking Plate 2.4mm"
+}
