@@ -1,0 +1,48 @@
+{
+  "testRunId": "STRESS-300VU-1785659115250",
+  "concurrentUsers": 300,
+  "durationSec": 60,
+  "totalRequests": 403714,
+  "successfulRequests": 403646,
+  "failedRequests": 68,
+  "passRate": "99.98%",
+  "rps": 6723.5,
+  "minMs": 6,
+  "maxMs": 298,
+  "avgMs": 30.7,
+  "p50Ms": 28,
+  "p90Ms": 46,
+  "p95Ms": 54,
+  "endpointStats": {
+    "/api/health": {
+      "count": 80806,
+      "sumMs": 2545803,
+      "minMs": 6,
+      "maxMs": 298
+    },
+    "/login": {
+      "count": 80741,
+      "sumMs": 2459141,
+      "minMs": 6,
+      "maxMs": 218
+    },
+    "/api/dashboard": {
+      "count": 80700,
+      "sumMs": 2408907,
+      "minMs": 6,
+      "maxMs": 102
+    },
+    "/api/patients/search?q=Sterling": {
+      "count": 80700,
+      "sumMs": 2461191,
+      "minMs": 9,
+      "maxMs": 102
+    },
+    "/api/ai/volumetric-compute": {
+      "count": 80699,
+      "sumMs": 2511370,
+      "minMs": 8,
+      "maxMs": 103
+    }
+  }
+}

@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds and Outputs
+dist/
+build/
+*.apk
+*.aar
+
+# IDE & OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Android & Gradle
+.gradle/
+**/android/.gradle/
+**/android/app/build/
+**/android/local.properties
+
+# Environment & Logs
+*.log
+.env
+.env.local

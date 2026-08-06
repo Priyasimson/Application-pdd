@@ -1,0 +1,14 @@
+{
+  "name": "reconai-load-tests",
+  "version": "1.0.0",
+  "description": "Baseline & Load Testing Suite for ReconAI Web System (100 Concurrent Virtual Users, 60s Duration)",
+  "main": "baseline-load-test.js",
+  "scripts": {
+    "test:load": "node baseline-load-test.js",
+    "generate-excel": "node generate-load-excel.js"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^4.22.2"
+  }
+}

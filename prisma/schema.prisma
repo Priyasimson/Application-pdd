@@ -1,0 +1,324 @@
+// ReconAI PostgreSQL Prisma Database Schema
+// Optimized for High Performance, Indexes, Soft Delete & Transactions
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMINISTRATOR
+  SENIOR_SURGEON
+  JUNIOR_SURGEON
+  RADIOLOGIST
+  RESEARCHER
+  NURSE
+  RECEPTIONIST
+  GUEST
+}
+
+enum ScanType {
+  CT
+  CBCT
+  MRI
+  DICOM
+  STL
+  OBJ
+  PLY
+}
+
+enum PathologyType {
+  AMELOBLASTOMA
+  SQUAMOUS_CELL_CARCINOMA
+  OSTEORADIONECROSIS
+  TRAUMA_FRACTURE
+  OSTEOMYELITIS
+  CONGENITAL_DEFECT
+}
+
+enum FlapType {
+  FIBULA_FREE_FLAP
+  ILIAC_CREST_FLAP
+  ALT_FLAP
+  RADIAL_FOREARM_FLAP
+  SCAPULAR_FLAP
+}
+
+enum MarginSafetyStatus {
+  SAFE
+  WARNING
+  DANGEROUS
+}
+
+model User {
+  id               String         @id @default(uuid())
+  email            String         @unique
+  passwordHash     String
+  fullName         String
+  role             Role           @default(SENIOR_SURGEON)
+  title            String?
+  department       String         @default("Oral & Maxillofacial Surgery")
+  phone            String?
+  avatarUrl        String?
+  mfaEnabled       Boolean        @default(true)
+  mfaSecret        String?
+  isVerified       Boolean        @default(true)
+  isActive         Boolean        @default(true)
+  isDeleted        Boolean        @default(false) // Soft Delete
+  lastLoginAt      DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  refreshTokens    RefreshToken[]
+  auditLogs        AuditLog[]
+  surgicalReports  SurgicalReport[]
+  createdPatients  Patient[]      @relation("SurgeonPatients")
+  appointments     Appointment[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceInfo String?
+  ipAddress  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  role      String
+  action    String
+  target    String
+  details   String?
+  ipAddress String
+  geoInfo   String?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+}
+
+model Patient {
+  id                String          @id @default(uuid())
+  hospitalNo        String          @unique
+  fullName          String
+  age               Int
+  gender            String
+  bloodGroup        String
+  phone             String
+  email             String?
+  diagnosis         String
+  diseaseType       PathologyType   @default(AMELOBLASTOMA)
+  cancerStage       String?
+  traumaDetails     String?
+  defectLocation    String
+  affectedSide      String          @default("Right")
+  medicalHistory    String?
+  previousSurgeries String?
+  currentMedication String?
+  allergies         String?
+  smokingStatus     String?
+  alcoholHistory    String?
+  qrCodeUrl         String?
+  isDeleted         Boolean         @default(false) // Soft Delete
+  surgeonId         String?
+  surgeon           User?           @relation("SurgeonPatients", fields: [surgeonId], references: [id], onDelete: SetNull)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  scans             MedicalScan[]
+  volumetricAnalysis VolumetricAnalysis[]
+  surgicalPlans     SurgicalPlan[]
+  digitalTwinStates DigitalTwinState[]
+  postOpAnalyses    PostOpAnalysis[]
+  surgicalReports   SurgicalReport[]
+  appointments      Appointment[]
+
+  @@index([hospitalNo])
+  @@index([fullName])
+  @@index([surgeonId])
+}
+
+model MedicalScan {
+  id             String    @id @default(uuid())
+  patientId      String
+  patient        Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  scanType       ScanType
+  filename       String
+  fileUrl        String
+  fileSize       Int
+  sliceThickness Float     @default(0.625)
+  huRangeMin     Float     @default(-1000)
+  huRangeMax     Float     @default(3000)
+  scannerModel   String?   @default("Siemens SOMATOM Force")
+  resolution     String?   @default("512x512x320")
+  contrastUsed   Boolean   @default(true)
+  uploadDate     DateTime  @default(now())
+
+  segmentations  SegmentationMask[]
+
+  @@index([patientId])
+}
+
+model SegmentationMask {
+  id             String      @id @default(uuid())
+  scanId         String
+  scan           MedicalScan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+  mandibleMaskUrl String?
+  maxillaMaskUrl  String?
+  boneMaskUrl     String?
+  softTissueMaskUrl String?
+  tumorMaskUrl    String?
+  nerveMaskUrl    String?
+  vesselMaskUrl   String?
+  diceScore       Float       @default(0.958)
+  confidenceScore Float       @default(0.984)
+  createdAt       DateTime    @default(now())
+
+  @@index([scanId])
+}
+
+model VolumetricAnalysis {
+  id                    String             @id @default(uuid())
+  patientId             String
+  patient               Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  boneVolumeCm3         Float
+  boneDensityHU         Float
+  boneHeightMm          Float
+  boneWidthMm           Float
+  boneThicknessMm       Float
+  boneLengthMm          Float
+  boneDefectVolumeCm3   Float
+  remainingBonePercent  Float
+  softTissueVolumeCm3   Float
+  muscleThicknessMm     Float
+  skinThicknessMm       Float
+  fatThicknessMm        Float
+  tumorRemovalVolumeCm3 Float
+  safeMarginCm          Float              @default(1.0)
+  totalRemovalVolumeCm3 Float
+  ianNerveDistanceMm    Float
+  marginSafetyStatus    MarginSafetyStatus @default(SAFE)
+  calculatedAt          DateTime           @default(now())
+
+  @@index([patientId])
+}
+
+model SurgicalPlan {
+  id                    String        @id @default(uuid())
+  patientId             String
+  patient               Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  resectionBoundary     String
+  cuttingGuideSpecs     String
+  recommendedFlap       FlapType      @default(FIBULA_FREE_FLAP)
+  recommendedPlateType  String        @default("2.0mm Titanium Reconstruction Plate")
+  screwCount            Int           @default(6)
+  estimatedBloodLossMl  Int           @default(350)
+  estimatedDurationHrs  Float         @default(4.5)
+  healingPredictionScore Int          @default(92)
+  status                String        @default("DRAFT") // DRAFT | APPROVED | COMPLETED
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([patientId])
+}
+
+model DigitalTwinState {
+  id                   String   @id @default(uuid())
+  patientId            String
+  patient              Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  cuttingPlaneX        Float    @default(0.0)
+  cuttingPlaneY        Float    @default(12.5)
+  cuttingPlaneZ        Float    @default(-5.0)
+  graftRotationAngle   Float    @default(15.0)
+  platePositionOffset  Float    @default(2.0)
+  maxStressMpa         Float    @default(142.5)
+  safetyFactor         Float    @default(2.4)
+  gapDistanceMm        Float    @default(0.4)
+  updatedAt            DateTime @updatedAt
+
+  @@index([patientId])
+}
+
+model PostOpAnalysis {
+  id                     String   @id @default(uuid())
+  patientId              String
+  patient                Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  preOpScanUrl           String
+  postOpScanUrl          String
+  boneVolumeDifferenceCm3 Float
+  alignmentAccuracyScore Float    @default(96.5)
+  primaryBoneUnionScore  Float    @default(94.2)
+  complicationRisk       String   @default("Low")
+  analyzedAt             DateTime @default(now())
+
+  @@index([patientId])
+}
+
+model SurgicalReport {
+  id           String   @id @default(uuid())
+  reportNo     String   @unique
+  patientId    String
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  summaryText  String
+  pdfUrl       String?
+  signed       Boolean  @default(true)
+  signedAt     DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@index([patientId])
+  @@index([authorId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO | WARNING | CRITICAL
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ImplantHardware {
+  id          String   @id @default(uuid())
+  name        String
+  manufacturer String  @default("Synthes MatrixMANDIBLE")
+  category    String   // Reconstruction Plate | Miniplate | Locking Screw | Lag Screw
+  material    String   @default("Ti-6Al-4V Titanium Alloy")
+  thicknessMm Float
+  holesCount  Int
+  stockCount  Int      @default(24)
+}
+
+model Appointment {
+  id          String   @id @default(uuid())
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  surgeonId   String
+  surgeon     User     @relation(fields: [surgeonId], references: [id], onDelete: Cascade)
+  title       String
+  date        DateTime
+  status      String   @default("SCHEDULED")
+
+  @@index([patientId])
+  @@index([surgeonId])
+}

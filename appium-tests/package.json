@@ -1,0 +1,15 @@
+{
+  "name": "reconai-appium-tests",
+  "version": "1.0.0",
+  "description": "Appium Mobile E2E Automated Test Suite & Quality Report Generator for ReconAI Mobile Web/Hybrid Application",
+  "main": "tests/mobile-app-tests.js",
+  "scripts": {
+    "test": "node tests/mobile-app-tests.js",
+    "generate-excel": "node generate-excel.js"
+  },
+  "dependencies": {
+    "appium": "^2.11.0",
+    "exceljs": "^4.4.0",
+    "webdriverio": "^8.38.0"
+  }
+}

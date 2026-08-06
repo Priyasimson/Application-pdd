@@ -1,0 +1,27 @@
+{
+  "name": "reconai-master",
+  "version": "1.0.0",
+  "description": "ReconAI Intelligent Maxillofacial Reconstruction Planning System",
+  "scripts": {
+    "generate-security-excel": "node generate-security-excel.js",
+    "generate-master-excel": "node load-tests/generate-master-excel.js",
+    "generate-load-excel": "node load-tests/generate-load-excel.js",
+    "generate-selenium-excel": "node selenium-tests/generate-excel.js",
+    "generate-appium-excel": "node appium-tests/generate-excel.js"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@hookform/resolvers": "^5.5.7",
+    "@mui/icons-material": "^9.2.0",
+    "@mui/material": "^9.2.0",
+    "axios": "^1.19.0",
+    "framer-motion": "^12.43.0",
+    "react-hook-form": "^7.83.0",
+    "react-icons": "^5.7.0",
+    "react-router-dom": "^7.18.2",
+    "recharts": "^3.10.1",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  }
+}

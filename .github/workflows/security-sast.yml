@@ -1,0 +1,66 @@
+name: ReconAI Backend SAST & Security Review Workflow
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  schedule:
+    - cron: '0 2 * * 1' # Run weekly on Mondays at 02:00 UTC
+
+jobs:
+  sast-security-audit:
+    name: Backend SAST, Dependency & Secret Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Project Dependencies
+        run: |
+          npm ci --ignore-scripts || npm install
+
+      # 1. Semgrep SAST Static Code Analysis
+      - name: Run Semgrep SAST Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/typescript p/expressjs p/owasp-top-10
+          generateSarif: "1"
+
+      # 2. Trivy Vulnerability & Misconfiguration Scan
+      - name: Run Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+      # 3. Gitleaks Hardcoded Secret & Token Scanner
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. Dependency Security Audit
+      - name: Run npm Audit & Dependency Review
+        run: |
+          npm audit --audit-level=critical
+
+      # 5. Upload Security Reports as Artifacts
+      - name: Upload Security Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-sast-reports
+          path: |
+            security-review.md
+            semgrep.sarif
